@@ -1,8 +1,12 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
+import './assets/css/tailwind.css'
+import ElementPlus from 'element-plus';
+import 'element-plus/lib/theme-chalk/index.css';
+
 import App from './App.vue'
 
-Vue.config.productionTip = false
 
-new Vue({
-  render: h => h(App),
-}).$mount('#app')
+const app = createApp(App)
+app.use(ElementPlus)
+
+app.mount('#app')
