@@ -24,6 +24,8 @@
             @dir-change-request="dirChange"
             @doc-read-request="openDoc"
             @doc-edit-request="editDoc"
+            @remove-doc-request="removeDoc"
+            @remove-dir-request="removeDir"
         >
         </File>
       </div>
@@ -163,6 +165,13 @@ import Path from "@/components/Path";
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
+Array.prototype.remove = function(val) {
+  let index = this.indexOf(val);
+  if (index > -1) {
+    this.splice(index, 1);
+  }
+};
+
 export default {
   name: "FolderView",
   props: {
@@ -197,12 +206,15 @@ export default {
       console.log(dirKey, 'in dirChange')
       this.$emit("dirChangeRequest", dirKey)
     },
+
     addDoc(docName, content) {
       console.log(docName, content)
     },
+
     addDir(dirName) {
       console.log(dirName)
     },
+
     goback() {
       let path = this.directory.key.substring(0, this.directory.key.length - 1)
       path = path.substring(0, path.lastIndexOf('/') + 1)
@@ -270,6 +282,18 @@ export default {
       }
     },
 
+    findParentByKey(key, data) {
+      if (key === data.key) {
+        return 1
+      }
+      console.log(data, 'in findParentByKey of FolderView')
+      if (!data.children) return false
+      for (var i = 0; i < data.children.length; i++) {
+        let t = this.findParentByKey(key, data.children[i])
+        if (t) return data
+      }
+    },
+
     saveEditDoc() {
       let node = this.findByKey(this.docBeingEdited, this.directory)
       node.content = this.editDocContent
@@ -281,7 +305,53 @@ export default {
         message: '保存成功！',
         type: 'success'
       })
-    }
+    },
+
+    removeByKey(nodeData, key) {
+      for (const nodeDatum of nodeData) {
+        if (nodeDatum.key === key) {
+          nodeData.remove(nodeDatum)
+          return true
+        }
+      }
+      return false;
+    },
+
+    removeDoc(key) {
+      let par = this.findParentByKey(key, this.directory)
+      if (this.removeByKey(par.children, key)) {
+        ElMessage({
+          showClose: true,
+          message: '已删除' + key,
+          type: 'success'
+        })
+      } else {
+        ElMessage({
+          showClose: true,
+          message: '删除错误',
+          type: 'error'
+        })
+      }
+    },
+
+    removeDir(key) {
+      let par = this.findParentByKey(key, this.directory)
+      if (this.removeByKey(par.children, key)) {
+        ElMessage({
+          showClose: true,
+          message: '已删除' + key,
+          type: 'success'
+        })
+      } else {
+        ElMessage({
+          showClose: true,
+          message: '删除错误',
+          type: 'error'
+        })
+      }
+      // TODO: recursively remove its children from FAT.
+    },
+
   },
   mounted() {
 
