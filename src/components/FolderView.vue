@@ -79,10 +79,8 @@
       >
         <div>
           <p> 文件内容： </p>
-          <div class="border-2 bg-blue-50 rounded-sm border-blue-500 block p-2">
-            <p class="font-medium font-sans">
-              {{ viewDocContent }}
-            </p>
+          <div class="border-2 bg-blue-50 rounded-sm border-blue-500 p-2">
+            <pre class="font-medium font-sans">{{ viewDocContent }}</pre>
             <p v-if="!viewDocContent" class="text-gray-300">
               该文档没有内容
             </p>
@@ -91,6 +89,29 @@
         <template #footer>
           <span class="dialog-footer">
             <el-button type="primary" @click="showDocViewerWindow = false;">关 闭</el-button>
+          </span>
+        </template>
+      </el-dialog>
+
+<!--      Document editor -->
+      <el-dialog
+          :title="editDocName"
+          v-model="showEditWindow"
+          width="50%"
+      >
+        <div>
+          <p> 编辑内容： </p>
+          <el-input
+              type="textarea"
+              :autosize="{ minRows: 20, maxRows: 30}"
+              placeholder="请输入内容"
+              v-model="editDocContent">
+          </el-input>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="showEditWindow = false;">放弃修改</el-button>
+            <el-button type="primary" @click="saveEditDoc(); showEditWindow = false;">保 存</el-button>
           </span>
         </template>
       </el-dialog>
@@ -153,13 +174,18 @@ export default {
       showNewFolderWindow: false,
       showNewDocWindow: false,
       showDocViewerWindow: false,
+      showEditWindow: false,
 
       hint: "不包含 . / ' \" $ { } 符号",
       fileNameInput: ref(''),
       docContent: ref(''),
+      editDocContent: ref(''),
 
       viewDocContent: ref(''),
-      viewDocName: ref('')
+      viewDocName: ref(''),
+      editDocName: ref(''),
+
+      docBeingEdited: null,
     }
   },
   components: {
@@ -223,8 +249,39 @@ export default {
       this.viewDocName = data.label
       this.viewDocContent = data.content
       this.showDocViewerWindow = true
-    }
+    },
 
+    editDoc(data) {
+      this.docBeingEdited = data.key
+      this.editDocName = data.label
+      this.editDocContent = data.content
+      this.showEditWindow = true
+    },
+
+    findByKey(key, data) {
+      if (data.key === key) {
+        return data
+      }
+      console.log(data, 'in findByKey of FolderView')
+      if (!data.children) return false
+      for (var i = 0; i < data.children.length; i++) {
+        let t = this.findByKey(key, data.children[i])
+        if (t) return t
+      }
+    },
+
+    saveEditDoc() {
+      let node = this.findByKey(this.docBeingEdited, this.directory)
+      node.content = this.editDocContent
+      this.editDocContent = ''
+      this.docBeingEdited = null
+      this.editDocName = ''
+      ElMessage({
+        showClose: true,
+        message: '保存成功！',
+        type: 'success'
+      })
+    }
   },
   mounted() {
 

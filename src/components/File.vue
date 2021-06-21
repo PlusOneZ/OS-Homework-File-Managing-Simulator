@@ -76,7 +76,7 @@ export default {
     doubleClick(mode) {
       if (this.data.type === DOC) {
         if (mode === 1) {
-          this.$emit("docEditRequest", this.data.key)
+          this.$emit("docEditRequest", this.data)
         } else {
           this.$emit("docReadRequest", this.data)
         }

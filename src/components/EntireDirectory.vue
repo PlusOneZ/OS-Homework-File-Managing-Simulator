@@ -32,6 +32,8 @@
 
 <script>
 
+import {ElMessage} from "element-plus";
+
 const DOC = 1
 const DIRECTORY = 0
 
@@ -120,6 +122,11 @@ export default {
 
       if (this.$refs.tree.getNode(key)) {
         console.log("duplicate")
+        ElMessage({
+          showClose: true,
+          message: '创建失败，已经存在同名文件。',
+          type: 'error'
+        })
         return false
       }
 
@@ -140,6 +147,11 @@ export default {
       } else {
         this.append(data, nodeKey)
       }
+      ElMessage({
+        showClose: true,
+        message: '创建成功！',
+        type: 'success'
+      })
     },
 
     add() {
@@ -195,7 +207,7 @@ export default {
       console.log(data, 'in findParentOfData')
       if (!data.children) return false
       for (var i = 0; i < data.children.length; i++) {
-        let t = this.findChildrenOfData(key, data.children[i])
+        let t = this.findParentOfData(key, data.children[i])
         if (t) return data
       }
     },
