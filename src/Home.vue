@@ -12,11 +12,15 @@
               class="pl-4"
               @dir-changed="treeDirChanged"
               :data="fileData"
+              ref="directory"
           ></EntireDirectory>
         </el-aside>
         <el-main>
           <FolderView
             :directory="currentDir"
+            @create-directory-request="createDir"
+            @create-document-request="createDoc"
+            @dir-change-request="changeDir"
           >
 
           </FolderView>
@@ -40,7 +44,6 @@ export default {
   },
   data() {
     return {
-      currentDirectory: 'root/',
       fileData: [{
         key: 'root/',
         label: 'root',
@@ -52,6 +55,7 @@ export default {
             label: 'dic1',
             isLeaf: false,
             type: DIRECTORY,
+            children: []
           },
           {
             key: 'root/file1',
@@ -66,15 +70,28 @@ export default {
   },
   methods: {
     treeDirChanged(n) {
-      console.log(n.key)
-      if (n.key){
-        this.currentDirectory = n.key
+      if (n) {
+        console.log('in treeDirChanged')
+        console.log(n)
+        this.currentDir = n
       }
+    },
+    changeDir(key) {
+      console.log(key, "in changeDir of home")
+      this.$refs.directory.changeDir(key)
+    },
+    createDir(name, key) {
+      console.log(name, key, "in createDir of home")
+      this.$refs.directory.addFile(name, DIRECTORY, key)
+    },
+    createDoc(name, key, content) {
+      console.log(name, key, "in createDoc of home")
+      this.$refs.directory.addFile(name, DOC, key, content)
     }
   },
   created() {
     this.currentDir = this.fileData[0]
-  }
+  },
 }
 </script>
 

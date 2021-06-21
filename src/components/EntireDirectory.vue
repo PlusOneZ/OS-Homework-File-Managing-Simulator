@@ -23,8 +23,9 @@
         </span>
       </template>
     </el-tree>
-    <el-button @click="haha">
-      click
+    <div class="h-5"></div>
+    <el-button @click="add">
+      Add Directory / File
     </el-button>
   </div>
 </template>
@@ -36,7 +37,7 @@ const DIRECTORY = 0
 
 function getParentDir(path) {
   var i = path.lastIndexOf('/')
-  return path.substring(0, i+1)
+  return path.substring(0, i + 1)
 }
 
 export default {
@@ -85,41 +86,67 @@ export default {
         this.setKeyOf(child, node.key)
       }
     },
-    addFile(label, type, nodeKey) {
-      var node = undefined
-      if (!nodeKey)
-        node = this.$refs.tree.getCurrentNode()
-      else
-        node = this.$refs.tree.getNode(nodeKey)
-      var key = node.data.key + label
+
+    addFile(label, type, nodeKey, docContent) {
+      console.log(nodeKey)
+      // var treeNode = this.$refs.tree.getNode(nodeKey)
+      // console.log(treeNode)
+      // if (!treeNode) {
+      //   treeNode = this.$refs.tree.getCurrentNode()
+      //   treeNode = treeNode? treeNode : this.$refs.tree.getNode('root/')
+      // }
+
+      if (!nodeKey) {
+        nodeKey = this.$refs.tree.getCurrentKey()
+        if (!nodeKey) {
+          nodeKey = 'root/'
+        }
+      }
+
+      var key = ''
+
+      if (nodeKey.substr(-1, 1) !== '/') {
+        let basepath = nodeKey.substring(0, nodeKey.lastIndexOf('/') + 1)
+        key = basepath + label
+      } else {
+        key = nodeKey + label
+      }
+
+      if (type === DIRECTORY) {
+        key += '/'
+      } else {
+        label += '.txt'
+      }
+
       if (this.$refs.tree.getNode(key)) {
         console.log("duplicate")
         return false
       }
-      if (node.type === DOC) {
-        this.$refs.tree.insertAfter(
-            {
-              'label': label,
-              'key': node.data.key + label,
-              'type': type,
-            },
-            node.key
-        )
+
+      var data = {
+        'label': label,
+        'key': key,
+        'type': type,
+      }
+
+      if (type === DIRECTORY) {
+        data['children'] = []
       } else {
-        this.$refs.tree.append(
-            {
-              'label': label,
-              'key': node.data.key + label,
-              'type': type,
-            },
-            node.key
-        )
+        data['content'] = docContent
+      }
+
+      if (nodeKey.substr(-1, 1) !== '/') {
+        this.insertSameLevel(data, nodeKey)
+      } else {
+        this.append(data, nodeKey)
       }
     },
-    haha() {
-      console.log(this.$refs.tree.getNode('root/'))
-      this.addFile('haha', DOC, 'root/')
+
+    add() {
+      console.log(this.$refs.tree.getNode('root/dic1'))
+      this.addFile('haha', DOC, 'root/file1')
     },
+
     doubleClick() {
       // console.log(this.$refs.tree.getCurrentNode())
       this.openNode = this.$refs.tree.getCurrentNode()
@@ -128,17 +155,79 @@ export default {
         this.$emit("dirChanged", this.openNode)
       } else if (this.openNode.type === DOC) {
         let path = getParentDir(this.openNode.key)
-        console.log(path)
         this.$emit("fileOpened", this.openNode)
         this.openNode = this.$refs.tree.getNode(path)
         this.$emit("dirChanged", this.openNode)
       }
+    },
+
+    changeDir(key) {
+      let node = null
+      // if (key.substr(-1, 1) === '/' && key !== 'root/') {
+      //   node = this.$refs.tree.getNode(key.substring(0, key.length - 1))
+      // } else {
+        node = this.$refs.tree.getNode(key)
+      // }
+      console.log(node, 'in changDir of ED')
+      if (node) {
+        // this.$refs.tree.setCurrentNode(node)
+        this.openNode = node.data
+        this.$emit("dirChanged", this.openNode)
+      }
+    },
+
+    findChildrenOfData(key, data) {
+      if (data.key === key) {
+        return data
+      }
+      console.log(data, 'in findChildrenOfData')
+      if (!data.children) return false
+      for (var i = 0; i < data.children.length; i++) {
+        let t = this.findChildrenOfData(key, data.children[i])
+        if (t) return t
+      }
+    },
+
+    findParentOfData(key, data) {
+      if (key === data.key) {
+        return 1
+      }
+      console.log(data, 'in findParentOfData')
+      if (!data.children) return false
+      for (var i = 0; i < data.children.length; i++) {
+        let t = this.findChildrenOfData(key, data.children[i])
+        if (t) return data
+      }
+    },
+
+    append(data, toNodeKey) {
+      let d = this.findChildrenOfData(toNodeKey, this.data[0])
+      console.log(d, 'in append')
+      if (!d) {
+        console.log("Error: cannot find" + toNodeKey);
+        return
+      }
+      var c = d.children
+      c.push(data)
+    },
+
+    insertSameLevel(data, toNodeKey) {
+      let d = this.findParentOfData(toNodeKey, this.data[0])
+      console.log(d, 'in insertSameLevel')
+      if (!d) {
+        console.log("Error: cannot find" + toNodeKey);
+        return
+      }
+      var c = d.children
+      c.push(data)
     }
+
   },
   mounted() {
     this.resetData()
     console.log('reset OK')
   },
+  computed: {}
 }
 </script>
 
