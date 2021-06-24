@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <el-container>
+  <div class="home">
+    <el-container class="frame">
       <el-header>
         <p class="text-red-300">
           haha
@@ -13,14 +13,18 @@
               @dir-changed="treeDirChanged"
               :data="fileData"
               ref="directory"
+              :user="user_name"
           ></EntireDirectory>
         </el-aside>
         <el-main>
           <FolderView
             :directory="currentDir"
+            :disk="disk"
+            :view_mode="viewMode"
             @create-directory-request="createDir"
             @create-document-request="createDoc"
             @dir-change-request="changeDir"
+            @view-change="changeView"
           >
 
           </FolderView>
@@ -36,6 +40,24 @@ import FolderView from "@/components/FolderView";
 const DOC = 1
 const DIRECTORY = 0
 
+Date.prototype.format = function (fmt) {
+  var o = {
+    "M+": this.getMonth() + 1, //月份
+    "d+": this.getDate(), //日
+    "h+": this.getHours(), //小时
+    "m+": this.getMinutes(), //分
+    "s+": this.getSeconds(), //秒
+    "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+    "S": this.getMilliseconds() //毫秒
+  };
+  if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+  return fmt;
+}
+
+var day = (new Date()).format("yyyy/MM/dd hh:mm:ss")
+
 export default {
   name: "Home",
   components: {
@@ -49,23 +71,21 @@ export default {
         label: 'root',
         type: DIRECTORY,
         isLeaf: false,
-        children: [
-          {
-            key: 'root/dic1',
-            label: 'dic1',
-            isLeaf: false,
-            type: DIRECTORY,
-            children: []
-          },
-          {
-            key: 'root/file1',
-            label: 'file1',
-            isLeaf: true,
-            type: DOC,
-          }
-        ],
+        children: [ ],
+        creator: 'system',
+        size: 0,
+        date: day
       }],
-      currentDir: undefined
+      currentDir: undefined,
+      disk: {
+        block_size: 512, // kb as unit
+        block_amount: 512,
+        bit_table: [ ],
+        storage: [ ],
+        available: null
+      },
+      user_name: 'root',
+      viewMode: true
     }
   },
   methods: {
@@ -87,10 +107,18 @@ export default {
     createDoc(name, key, content) {
       console.log(name, key, "in createDoc of home")
       this.$refs.directory.addFile(name, DOC, key, content)
+    },
+    changeView() {
+      this.viewMode = !this.viewMode
     }
   },
   created() {
     this.currentDir = this.fileData[0]
+    for (let i = 0; i < this.disk.block_amount; i++) {
+      this.disk.bit_table[i] = false
+      this.disk.storage[i] = null
+    }
+    this.disk.available = this.disk.block_amount
   },
 }
 </script>
@@ -111,6 +139,18 @@ export default {
 .el-aside {
   text-align: center;
   width: 30%;
+}
+
+.home {
+  max-height: 100%;
+  min-height: 100%;
+  height: 100%;
+}
+
+.frame {
+  max-height: 100%;
+  min-height: 100%;
+  height: 100%;
 }
 
 </style>

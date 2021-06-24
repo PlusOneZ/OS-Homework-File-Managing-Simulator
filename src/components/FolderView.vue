@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container class="frame">
     <el-header>
       <div class="flex line-45 pt-1">
         <el-button
@@ -15,8 +15,8 @@
         ></Path>
       </div>
     </el-header>
-    <el-main>
-      <div class="grid-flow-row grid-cols-3 pt-4">
+    <el-main class="folder-view">
+      <div class=" pt-4" v-if="view_mode">
         <File
             v-for="f in directory.children"
             :key="f.key"
@@ -29,6 +29,25 @@
         >
         </File>
       </div>
+      <FileRecord
+          v-if="!view_mode"
+          :directory="directory"
+          @dir-change-request="dirChange"
+          @doc-read-request="openDoc"
+          @doc-edit-request="editDoc"
+          @remove-doc-request="removeDoc"
+          @remove-dir-request="removeDir"
+      >
+
+      </FileRecord>
+
+      <DiskView
+          v-if="!view_mode"
+          :disk="disk"
+      >
+
+      </DiskView>
+
 
 <!--      New directory -->
       <el-dialog
@@ -36,16 +55,21 @@
           v-model="showNewFolderWindow"
           width="30%"
       >
-        <div>
-          文件名：
-          <el-input v-model="fileNameInput" :placeholder="hint"></el-input>
-        </div>
-        <template #footer>
-          <span class="dialog-footer">
+        <el-form label-position="left" label-width="80px" @submit.prevent="addNewDir();showNewFolderWindow = false; fileNameInput = ''">
+          <el-form-item label="文件名">
+            <el-input v-model="fileNameInput"  :placeholder="hint" ref="fileName"></el-input>
+          </el-form-item>
+          <el-form-item>
             <el-button @click="showNewFolderWindow = false; fileNameInput = ''" style="margin-right: 10px">取 消</el-button>
             <el-button type="primary" @click="addNewDir();showNewFolderWindow = false; fileNameInput = ''">确 定</el-button>
-          </span>
-        </template>
+          </el-form-item>
+        </el-form>
+<!--        <template #footer>-->
+<!--          <span class="dialog-footer">-->
+<!--            <el-button @click="showNewFolderWindow = false; fileNameInput = ''" style="margin-right: 10px">取 消</el-button>-->
+<!--            <el-button type="primary" @click="addNewDir();showNewFolderWindow = false; fileNameInput = ''">确 定</el-button>-->
+<!--          </span>-->
+<!--        </template>-->
       </el-dialog>
 
 <!--      New document-->
@@ -54,17 +78,19 @@
           v-model="showNewDocWindow"
           width="65%"
       >
-        <div>
-          <p> 文件名： </p>
-          <el-input v-model="fileNameInput" :placeholder="hint"></el-input>
-          <p> 文件内容： </p>
-          <el-input
-              type="textarea"
-              :autosize="{ minRows: 20, maxRows: 30}"
-              placeholder="请输入内容"
-              v-model="docContent">
-          </el-input>
-        </div>
+        <el-form label-position="left" label-width="100px" @submit.prevent="addNewDoc();showNewDocWindow = false; fileNameInput = ''; docContent=''">
+          <el-form-item label="文件名">
+            <el-input v-model="fileNameInput"  :placeholder="hint" ref="fileName2"></el-input>
+          </el-form-item>
+          <el-form-item label="文件内容：">
+            <el-input
+                type="textarea"
+                :autosize="{ minRows: 20, maxRows: 30}"
+                placeholder="请输入内容"
+                v-model="docContent">
+            </el-input>
+          </el-form-item>
+        </el-form>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="showNewDocWindow = false; fileNameInput = ''" style="margin-right: 10px">取 消</el-button>
@@ -130,13 +156,13 @@
             <div>
               <el-button
                   icon="el-icon-folder-add" class="in-pop"
-                  @click="showNewFolderWindow = true"
+                  @click="newFolderWindow"
               > 文件夹
               </el-button>
 
               <el-button
                   icon="el-icon-document-add" class="in-pop"
-                  @click="showNewDocWindow = true"
+                  @click="newDocWindow"
               >
                 文档
               </el-button>
@@ -151,7 +177,10 @@
         </div>
         <div class="h-5"></div>
         <div>
-          <el-button icon="el-icon-info" circle type="primary" class=" shadow-lg"></el-button>
+          <el-button icon="el-icon-info" circle type="primary" class=" shadow-lg"
+                     @click="viewChange"
+          >
+          </el-button>
         </div>
       </div>
 
@@ -162,6 +191,9 @@
 <script>
 import File from "@/components/File";
 import Path from "@/components/Path";
+import FileRecord from "@/components/FileRecord";
+import DiskView from "@/components/DiskView";
+
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -175,7 +207,9 @@ Array.prototype.remove = function(val) {
 export default {
   name: "FolderView",
   props: {
-    directory: Object
+    directory: Object,
+    disk: Object,
+    view_mode: Boolean
   },
   data() {
     return {
@@ -198,10 +232,26 @@ export default {
     }
   },
   components: {
+    DiskView,
+    FileRecord,
     File,
     Path
   },
   methods: {
+    newFolderWindow(){
+      this.showNewFolderWindow = true
+      setTimeout(() => {this.$refs.fileName.focus()}, 300)
+    },
+
+    newDocWindow() {
+      this.showNewDocWindow = true
+      setTimeout(() => {this.$refs.fileName2.focus()}, 300)
+    },
+
+    viewChange() {
+      this.$emit("viewChange")
+    },
+
     dirChange(dirKey) {
       console.log(dirKey, 'in dirChange')
       this.$emit("dirChangeRequest", dirKey)
@@ -248,6 +298,7 @@ export default {
     },
 
     checkInputFile(name) {
+      if (name === '') return false
       let notAllowed = ['/', '.', "'", '"', '$', '{', '}']
       for (const char of notAllowed) {
         if (name.indexOf(char) > 0) {
@@ -403,6 +454,18 @@ export default {
 .in-pop {
   width: 120px;
   text-align: left;
+}
+
+.frame {
+  max-height: 100%;
+  min-height: 100%;
+  height: 100%;
+}
+
+.folder-view {
+  max-height: 100%;
+  min-height: 100%;
+  height: 100%;
 }
 
 </style>
