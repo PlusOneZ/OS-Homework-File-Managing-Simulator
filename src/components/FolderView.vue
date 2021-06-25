@@ -108,7 +108,7 @@
         <div>
           <p> 文件内容： </p>
           <div class="border-2 bg-blue-50 rounded-sm border-blue-500 p-2">
-            <pre class="font-medium font-sans">{{ viewDocContent }}</pre>
+            <p class="font-medium font-sans overflow-clip">{{ viewDocContent }}</p>
             <p v-if="!viewDocContent" class="text-gray-300">
               该文档没有内容
             </p>
@@ -295,6 +295,8 @@ export default {
           type: 'error'
         })
       }
+      this.editDocContent = ''
+      this.docContent = ''
     },
 
     checkInputFile(name) {
@@ -347,6 +349,10 @@ export default {
 
     saveEditDoc() {
       let node = this.findByKey(this.docBeingEdited, this.directory)
+      let size = this.calculateSize(this.editDocContent)
+      this.setBlockOf(node, size)
+      this.updateDirectorySize(node.key, node.size - size)
+      node.size = size
       node.content = this.editDocContent
       this.editDocContent = ''
       this.docBeingEdited = null
@@ -356,6 +362,20 @@ export default {
         message: '保存成功！',
         type: 'success'
       })
+
+    },
+
+    setBlockOf(doc, size) {
+      let oldBlockCount = doc.blocks.length
+      let newBlockCount = Math.ceil(size /  this.disk.block_size)
+      if (newBlockCount === 0) newBlockCount = 1
+      if (oldBlockCount === newBlockCount) {
+        return undefined
+      } else if (oldBlockCount > newBlockCount) {
+        this.retrieveSpaceOf(doc, oldBlockCount - newBlockCount)
+      } else {
+        this.allocateBlocks(newBlockCount - oldBlockCount, doc)
+      }
     },
 
     removeByKey(nodeData, key) {
@@ -370,6 +390,9 @@ export default {
 
     removeDoc(key) {
       let par = this.findParentByKey(key, this.directory)
+      let data = this.findByKey(key, this.directory)
+      this.updateDirectorySize(data.key, -data.size)
+      this.retrieveSpaceOf(data)
       if (this.removeByKey(par.children, key)) {
         ElMessage({
           showClose: true,
@@ -387,6 +410,8 @@ export default {
 
     removeDir(key) {
       let par = this.findParentByKey(key, this.directory)
+      let cur = this.findByKey(key, this.directory)
+      this.removeAllDocUnderDir(cur)
       if (this.removeByKey(par.children, key)) {
         ElMessage({
           showClose: true,
@@ -400,8 +425,73 @@ export default {
           type: 'error'
         })
       }
-      // TODO: recursively remove its children from FAT.
     },
+
+    removeAllDocUnderDir(dir) {
+      for (const child of dir.children) {
+        if (child.type !== 0) {
+          this.retrieveSpaceOf(child)
+          this.updateDirectorySize(child.key, -child.size)
+        } else {
+          this.removeAllDocUnderDir(child)
+        }
+      }
+    },
+
+    allocateBlocks(num, data) {
+      console.log(num)
+      if (num > this.disk.available) {
+        ElMessage({
+          showClose: true,
+          message: '空间不足',
+          type: 'error'
+        })
+        return false
+      }
+      for (let i = 0; i < num; i++) {
+        console.log("free_pointer ", this.disk.free_pointer)
+        data.blocks.push(this.disk.free_pointer)
+        this.disk.bit_table[this.disk.free_pointer] = true
+        this.disk.storage[this.disk.free_pointer] = data.key
+        this.findNextDiskFreeSpace()
+      }
+      return true
+    },
+
+    findNextDiskFreeSpace() {
+      for (let i = 0; i < this.disk.block_amount; i++) {
+        if (this.disk.bit_table[this.disk.free_pointer] === false) {
+          return
+        }
+        this.disk.free_pointer = (this.disk.free_pointer + 1) % this.disk.block_amount
+      }
+    },
+
+    retrieveSpaceOf(data, amount) {
+      if (!data.blocks) return
+      if (!amount) {
+        amount = data.blocks.length
+      }
+      for (let i = 0; i < amount; i++) {
+        this.disk.bit_table[data.blocks.pop()] = false
+        this.disk.available++
+      }
+    },
+
+    calculateSize(text) {
+      let count = text.length;
+      for (let i = 0; i < text.length; i++) {
+        if (text.charCodeAt(i) > 255) {
+          count++;
+        }
+      }
+      // console.log('in calculate: ', count, count /1024)
+      return (count / 1024);
+    },
+
+    updateDirectorySize(path, change) {
+      this.$emit('changeSizeOfPath', path, change)
+    }
 
   },
   mounted() {

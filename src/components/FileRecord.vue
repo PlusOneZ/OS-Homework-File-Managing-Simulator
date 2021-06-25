@@ -7,7 +7,8 @@
           <th style="width: 16.67%">Creator</th>
           <th style="width: 16.67%">Size</th>
           <th style="width: 16.67%">Date</th>
-          <th style="width: 50%">File Name</th>
+          <th style="width: 10%">Type</th>
+          <th style="width: 40%">File Name</th>
         </tr>
         </thead>
         <tbody>
@@ -15,23 +16,24 @@
             @dblclick="doubleClick(r, 0)"
             @contextmenu.prevent="contextmenuVisible = true"
         >
-<!--          <el-popover-->
-<!--              placement="top"-->
-<!--              :width="160"-->
-<!--              :visible="contextmenuVisible"-->
-<!--          >-->
-<!--            <div>-->
-<!--              <el-button @click="doubleClick(r)" class="contextmenu"> 打开</el-button>-->
-<!--              <el-button v-if="r.type !== 0" @click="doubleClick(r, 1)" class="contextmenu"> 编辑</el-button>-->
-<!--              <el-button @click="deleteFileOrDirectory(r)" class="contextmenu"> 删除</el-button>-->
-<!--            </div>-->
-<!--            <template #reference>-->
-              <td> {{ r.creator }}</td>
-              <td> {{ r.size }}</td>
-              <td> {{ r.date }}</td>
-              <td> {{ r.label }}</td>
-<!--            </template>-->
-<!--          </el-popover>-->
+          <!--          <el-popover-->
+          <!--              placement="top"-->
+          <!--              :width="160"-->
+          <!--              :visible="contextmenuVisible"-->
+          <!--          >-->
+          <!--            <div>-->
+          <!--              <el-button @click="doubleClick(r)" class="contextmenu"> 打开</el-button>-->
+          <!--              <el-button v-if="r.type !== 0" @click="doubleClick(r, 1)" class="contextmenu"> 编辑</el-button>-->
+          <!--              <el-button @click="deleteFileOrDirectory(r)" class="contextmenu"> 删除</el-button>-->
+          <!--            </div>-->
+          <!--            <template #reference>-->
+          <td> {{ r.creator }}</td>
+          <td> {{ r.size }}</td>
+          <td> {{ r.date }}</td>
+          <td> {{ r.type === 0 ? 'DIR' : 'DOC' }}</td>
+          <td> {{ r.label }}</td>
+          <!--            </template>-->
+          <!--          </el-popover>-->
         </tr>
         </tbody>
       </table>

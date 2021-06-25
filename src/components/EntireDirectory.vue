@@ -21,7 +21,7 @@
             <i class="el-icon-folder" v-if="(data.type === 0) && (!node.expanded || node.isLeaf)"></i>
             <i class="el-icon-folder-opened" v-if="(data.type === 0) && node.expanded && !node.isLeaf"></i>
             <i class="el-icon-document" v-if="(data.type === 1)"></i>
-            {{ node.label + "   " + data.key }}
+            {{ node.label }}
           </span>
         </span>
       </template>
@@ -62,7 +62,8 @@ export default {
   props: {
     data: Object,
     user: String,
-    current: String
+    current: String,
+    disk: Object
   },
   data() {
     return {
@@ -96,6 +97,8 @@ export default {
       console.log(this.data[0])
       this.setKeyOf(this.data[0], "")
     },
+
+
     setKeyOf(node, parentKey) {
       console.log("node" + node.label)
       node['key'] = parentKey + node.label + ((node.type === DIRECTORY) ? '/' : '')
@@ -106,14 +109,19 @@ export default {
       }
     },
 
+    calculateSize(text) {
+      let count = text.length;
+      for (let i = 0; i < text.length; i++) {
+        if (text.charCodeAt(i) > 255) {
+          count++;
+        }
+      }
+      // console.log('in calculate: ', count, count /1024)
+      return (count / 1024);
+    },
+
     addFile(label, type, nodeKey, docContent) {
       console.log(nodeKey)
-      // var treeNode = this.$refs.tree.getNode(nodeKey)
-      // console.log(treeNode)
-      // if (!treeNode) {
-      //   treeNode = this.$refs.tree.getCurrentNode()
-      //   treeNode = treeNode? treeNode : this.$refs.tree.getNode('root/')
-      // }
 
       if (!nodeKey) {
         nodeKey = this.$refs.tree.getCurrentKey()
@@ -135,6 +143,7 @@ export default {
         key += '/'
       } else {
         label += '.txt'
+        key += '.txt'
       }
 
       if (this.$refs.tree.getNode(key)) {
@@ -160,23 +169,81 @@ export default {
         data['size'] = 0
       } else {
         data['content'] = docContent
+        data['size'] = this.calculateSize(docContent)
+        data['blocks'] = []
+        if (data.size === 0) {
+          data.size = this.calculateSize('1')
+        }
       }
 
+      // console.log(data['size'])
+
+      let blockNeeded = Math.ceil(data.size / this.disk.block_size)
+      // console.log("blocks:" , blockNeeded, data.size / this.disk.block_amount)
+
       if (nodeKey.substr(-1, 1) !== '/') {
-        this.insertSameLevel(data, nodeKey)
+        if (((data.type === DOC) && this.allocateBlocks(blockNeeded, data)) || data.type === DIRECTORY) {
+          this.insertSameLevel(data, nodeKey)
+          ElMessage({
+            showClose: true,
+            message: '创建成功！',
+            type: 'success'
+          })
+        }
       } else {
-        this.append(data, nodeKey)
+        if (((data.type === DOC) && this.allocateBlocks(blockNeeded, data)) || data.type === DIRECTORY) {
+          this.append(data, nodeKey)
+          ElMessage({
+            showClose: true,
+            message: '创建成功！',
+            type: 'success'
+          })
+        }
       }
-      ElMessage({
-        showClose: true,
-        message: '创建成功！',
-        type: 'success'
-      })
+      setTimeout(() => {
+        if (data.size > 0) {
+          this.$emit('changeSizeOfPath', data.key, data.size)
+        }
+      }, 500)
+    },
+
+    allocateBlocks(num, data) {
+      console.log(num)
+      if (num > this.disk.available) {
+        ElMessage({
+          showClose: true,
+          message: '空间不足',
+          type: 'error'
+        })
+        return false
+      }
+      for (let i = 0; i < num; i++) {
+        console.log("free_pointer ", this.disk.free_pointer)
+        data.blocks.push(this.disk.free_pointer)
+        this.disk.bit_table[this.disk.free_pointer] = true
+        this.disk.storage[this.disk.free_pointer] = data.key
+        this.disk.available--
+        this.findNextDiskFreeSpace()
+      }
+      return true
+    },
+
+    findNextDiskFreeSpace() {
+      for (let i = 0; i < this.disk.block_amount; i++) {
+        if (this.disk.bit_table[this.disk.free_pointer] === false) {
+          return
+        }
+        this.disk.free_pointer = (this.disk.free_pointer + 1) % this.disk.block_amount
+      }
     },
 
     quickAdd() {
       let type = Math.floor(Math.random() * 2)
-      this.addFile((new Date()).format("yyyy-MM-dd hh-mm-ss.SS"), type, this.current)
+      if (type === DIRECTORY) {
+        this.addFile((new Date()).format("h-m-s.S M-d".substr(0, 21)), type, this.current)
+      } else {
+        this.addFile((new Date()).format("h-m-s.S M-d".substr(0, 21)), type, this.current, '')
+      }
     },
 
     doubleClick() {
