@@ -22,9 +22,10 @@ export default {
 
 <style scoped>
 .disk {
-  max-height: 50%;
-  min-height: 50%;
-  height: 50%;
+  max-height: 45%;
+  min-height: 45%;
+  height: 45%;
+  overflow-y: scroll;
 }
 p {
   color: white;

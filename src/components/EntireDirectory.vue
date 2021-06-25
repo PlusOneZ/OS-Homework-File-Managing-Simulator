@@ -1,5 +1,8 @@
 <template>
-  <div class="text-lg pt-5">
+  <div class="text-lg pt-5 max-h-full">
+    <el-button @click="quickAdd">
+      Quick Add
+    </el-button>
     <el-tree
         :data="data"
         node-key="key"
@@ -23,10 +26,6 @@
         </span>
       </template>
     </el-tree>
-    <div class="h-5"></div>
-    <el-button @click="add">
-      Add Directory / File
-    </el-button>
   </div>
 </template>
 
@@ -62,7 +61,8 @@ export default {
   name: "EntireDirectory",
   props: {
     data: Object,
-    user: String
+    user: String,
+    current: String
   },
   data() {
     return {
@@ -174,9 +174,9 @@ export default {
       })
     },
 
-    add() {
-      console.log(this.$refs.tree.getNode('root/dic1'))
-      this.addFile('haha', DOC, 'root/file1')
+    quickAdd() {
+      let type = Math.floor(Math.random() * 2)
+      this.addFile((new Date()).format("yyyy-MM-dd hh-mm-ss.SS"), type, this.current)
     },
 
     doubleClick() {
@@ -198,7 +198,7 @@ export default {
       // if (key.substr(-1, 1) === '/' && key !== 'root/') {
       //   node = this.$refs.tree.getNode(key.substring(0, key.length - 1))
       // } else {
-        node = this.$refs.tree.getNode(key)
+      node = this.$refs.tree.getNode(key)
       // }
       console.log(node, 'in changDir of ED')
       if (node) {
@@ -264,6 +264,10 @@ export default {
 </script>
 
 <style scoped>
+.el-tree {
+  max-height: 90%;
+  overflow: auto;
+}
 
 
 </style>

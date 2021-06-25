@@ -85,7 +85,7 @@
           <el-form-item label="文件内容：">
             <el-input
                 type="textarea"
-                :autosize="{ minRows: 20, maxRows: 30}"
+                :autosize="{ minRows: 20, maxRows: 30 }"
                 placeholder="请输入内容"
                 v-model="docContent">
             </el-input>
@@ -144,7 +144,7 @@
         </template>
       </el-dialog>
 
-<!--      At bottom -->
+<!--      At bottom: Button Group -->
       <div class="button-group">
         <div>
           <el-popover
@@ -463,9 +463,9 @@ export default {
 }
 
 .folder-view {
-  max-height: 100%;
-  min-height: 100%;
-  height: 100%;
+  max-height: 95%;
+  min-height: 95%;
+  height: 95%;
 }
 
 </style>

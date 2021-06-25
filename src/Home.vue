@@ -2,16 +2,23 @@
   <div class="home">
     <el-container class="frame">
       <el-header>
-        <p class="text-red-300">
-          haha
+        <p class="text-xl text-bold hd">
+          Online File Management Simulator
+<!--          TODO: Add Download button and logic -->
         </p>
+
+        <div class="button-group">
+        <el-button @click="exportFile" circle="true" icon="el-icon-download" type="primary"> </el-button>
+        <el-button @click="exportFile" circle="true" icon="el-icon-upload2" type="primary">  </el-button>
+        </div>
       </el-header>
-      <el-container>
+      <el-container class="frame">
         <el-aside>
           <EntireDirectory
               class="pl-4"
               @dir-changed="treeDirChanged"
               :data="fileData"
+              :current="currentDir.key"
               ref="directory"
               :user="user_name"
           ></EntireDirectory>
@@ -37,6 +44,8 @@
 <script>
 import EntireDirectory from "@/components/EntireDirectory";
 import FolderView from "@/components/FolderView";
+import {ElMessage} from "element-plus";
+
 const DOC = 1
 const DIRECTORY = 0
 
@@ -89,6 +98,21 @@ export default {
     }
   },
   methods: {
+
+    exportFile() {
+      let data = new Blob([JSON.stringify(this.fileData)], {type : 'application/json'})
+      let a = document.createElement('a');
+      a.download = "ArchivedFiles"
+      a.href = URL.createObjectURL(data)
+      a.style.visibility = 'none'
+      a.click()
+      ElMessage({
+        showClose: true,
+        message: '成功导出，请查看下载文件夹',
+        type: 'success'
+      })
+    },
+
     treeDirChanged(n) {
       if (n) {
         console.log('in treeDirChanged')
@@ -138,6 +162,7 @@ export default {
 
 .el-aside {
   text-align: center;
+  max-height: 90%;
   width: 30%;
 }
 
@@ -151,6 +176,16 @@ export default {
   max-height: 100%;
   min-height: 100%;
   height: 100%;
+}
+
+.hd {
+  line-height: 60px;
+}
+
+.button-group {
+  position: fixed;
+  top: 5px;
+  right: 5px;
 }
 
 </style>

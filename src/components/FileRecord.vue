@@ -95,10 +95,11 @@ tbody tr:hover {
 }
 
 .half {
-  max-height: 50%;
-  min-height: 50%;
-  height: 50%;
+  max-height: 45%;
+  min-height: 45%;
+  height: 45%;
   width: 100%;
+  overflow-y: scroll;
 }
 
 </style>
