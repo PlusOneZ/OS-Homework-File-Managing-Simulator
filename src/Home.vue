@@ -54,7 +54,7 @@
           <el-dialog
               title="基本信息"
               v-model="basicInfoVisible"
-              width="65%"
+              width="40%"
           >
             <el-form label-position="left" label-width="100px" @submit.prevent="basicInfo(); basicInfoVisible = false">
               <el-form-item label="用户名">
