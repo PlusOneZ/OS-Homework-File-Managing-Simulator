@@ -4,13 +4,19 @@
       <el-header>
         <p class="text-xl text-bold hd">
           Online File Management Simulator
-<!--          TODO: Add Download button and logic -->
         </p>
 
-        <div class="button-group">
-        <el-button @click="exportFile" circle="true" icon="el-icon-download" type="primary"> </el-button>
-        <el-button @click="exportFile" circle="true" icon="el-icon-upload2" type="primary">  </el-button>
+        <div class="button-right">
+          <el-button @click="exportFile" :circle="true" icon="el-icon-download" type="primary"></el-button>
         </div>
+
+          <el-upload ref="upload" :limit="1" :on-change="changeUploadFile" :file-list="undefined"
+                     :auto-upload="false" :multiple="false" action="#" accept=".json" >
+            <div class="button-left">
+            <el-button @click="importFile" :circle="true" icon="el-icon-upload2" type="primary"></el-button>
+            </div>
+          </el-upload>
+
       </el-header>
       <el-container class="frame">
         <el-aside>
@@ -25,13 +31,13 @@
         </el-aside>
         <el-main>
           <FolderView
-            :directory="currentDir"
-            :disk="disk"
-            :view_mode="viewMode"
-            @create-directory-request="createDir"
-            @create-document-request="createDoc"
-            @dir-change-request="changeDir"
-            @view-change="changeView"
+              :directory="currentDir"
+              :disk="disk"
+              :view_mode="viewMode"
+              @create-directory-request="createDir"
+              @create-document-request="createDoc"
+              @dir-change-request="changeDir"
+              @view-change="changeView"
           >
 
           </FolderView>
@@ -80,7 +86,7 @@ export default {
         label: 'root',
         type: DIRECTORY,
         isLeaf: false,
-        children: [ ],
+        children: [],
         creator: 'system',
         size: 0,
         date: day
@@ -89,8 +95,8 @@ export default {
       disk: {
         block_size: 512, // kb as unit
         block_amount: 512,
-        bit_table: [ ],
-        storage: [ ],
+        bit_table: [],
+        storage: [],
         available: null
       },
       user_name: 'root',
@@ -99,8 +105,37 @@ export default {
   },
   methods: {
 
+    changeUploadFile(file) {
+      if (file.status === 'ready') {
+        this.handleUpload(file)
+      } else if (file.status === 'fail') {
+        ElMessage({
+          showClose: true,
+          message: '上传出错',
+          type: 'error'
+        })
+      }
+
+    },
+
+    handleUpload(file) {
+      let reader = new FileReader()
+      reader.readAsText(file.raw);
+      let _this = this
+      reader.onload = function(evt) {
+        console.log(evt.target.result)
+        let data = JSON.parse(evt.target.result)
+
+        if (data) {
+          console.log("parse OK")
+          _this.fileData = data
+          setTimeout(() => {_this.$refs.directory.changeDir('root/')}, 500)
+        }
+      }
+    },
+
     exportFile() {
-      let data = new Blob([JSON.stringify(this.fileData)], {type : 'application/json'})
+      let data = new Blob([JSON.stringify(this.fileData)], {type: 'application/json'})
       let a = document.createElement('a');
       a.download = "ArchivedFiles"
       a.href = URL.createObjectURL(data)
@@ -111,6 +146,10 @@ export default {
         message: '成功导出，请查看下载文件夹',
         type: 'success'
       })
+    },
+
+    importFile() {
+
     },
 
     treeDirChanged(n) {
@@ -182,10 +221,17 @@ export default {
   line-height: 60px;
 }
 
-.button-group {
+.button-left {
+  line-height: normal;
+  position: fixed;
+  right: 105px !important;
+  top: 5px !important;
+}
+
+.button-right {
   position: fixed;
   top: 5px;
   right: 5px;
+  line-height: normal;
 }
-
 </style>

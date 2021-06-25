@@ -15,10 +15,6 @@
             class="hover:shadow-lg"
             @dblclick="doubleClick"
 
-
-            @click="doubleClick"
-
-
             @blur="contextmenuVisible = false"
             @contextmenu.prevent="contextmenuVisible = true"
         >
