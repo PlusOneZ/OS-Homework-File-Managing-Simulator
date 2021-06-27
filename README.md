@@ -9,7 +9,7 @@ Tongji SSE Operating System Course Assignment 3.
 See Assignment 1 [here](https://github.com/PlusOneZ/OS-Homework-Elevator-Dispatching).
 See Assignment 2 [here](https://github.com/PlusOneZ/OS-Homework-Memory-Allocation)
 
-The [github-page](#) of this repository is an online deployment of this simulator. Check that out!
+The [github-page](https://plusonez.github.io/OS-Homework-File-Managing-Simulator/) of this repository is an online deployment of this simulator. Check that out!
 
 
 ## Project setup
