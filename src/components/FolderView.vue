@@ -350,6 +350,7 @@ export default {
     saveEditDoc() {
       let node = this.findByKey(this.docBeingEdited, this.directory)
       let size = this.calculateSize(this.editDocContent)
+      // reset blocks
       this.setBlockOf(node, size)
       this.updateDirectorySize(node.key, node.size - size)
       node.size = size

@@ -176,10 +176,7 @@ export default {
         }
       }
 
-      // console.log(data['size'])
-
       let blockNeeded = Math.ceil(data.size / this.disk.block_size)
-      // console.log("blocks:" , blockNeeded, data.size / this.disk.block_amount)
 
       if (nodeKey.substr(-1, 1) !== '/') {
         if (((data.type === DOC) && this.allocateBlocks(blockNeeded, data)) || data.type === DIRECTORY) {
