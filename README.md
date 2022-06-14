@@ -11,6 +11,7 @@ See Assignment 2 [here](https://github.com/PlusOneZ/OS-Homework-Memory-Allocatio
 
 The [github-page](#) of this repository is an online deployment of this simulator. Check that out!
 
+For more information, click [here](./doc/doc.md) to view the documentation in Chinese!
 
 ## Project setup
 ```
@@ -41,4 +42,5 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 This is a browser based **file system**. Different from those file
 management system running on your Operating System, this browser side
 app **simulates** the action done with the manipulations of file.
+
 

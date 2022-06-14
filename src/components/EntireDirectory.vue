@@ -176,10 +176,7 @@ export default {
         }
       }
 
-      // console.log(data['size'])
-
       let blockNeeded = Math.ceil(data.size / this.disk.block_size)
-      // console.log("blocks:" , blockNeeded, data.size / this.disk.block_amount)
 
       if (nodeKey.substr(-1, 1) !== '/') {
         if (((data.type === DOC) && this.allocateBlocks(blockNeeded, data)) || data.type === DIRECTORY) {
@@ -338,3 +335,39 @@ export default {
 
 
 </style>
+
+<script>
+import {ElMessage} from "element-plus";
+
+addFile(label, type, nodeKey, docContent) {
+  var key = getNewPath()  // 产生新路径标识符
+
+  // 判断目录下是否已有同名文件
+  if (this.$refs.tree.getNode(key)) {
+    console.log("duplicate")
+    ElMessage({message: '创建失败，已经存在同名文件。'})
+    return false
+  }
+
+  var data = { /* 一系列数据，构成文件对象 */ }
+
+  let blockNeeded = calculateBlocks(data)  // 计算所需的块数
+
+  // 创建步骤，首先要判断是否够空间
+  if (((data.type === DOC) && this.allocateBlocks(blockNeeded, data)) || data.type === DIRECTORY) {
+    this.insertSameLevel(data, nodeKey)
+    ElMessage({
+      showClose: true,
+      message: '创建成功！',
+      type: 'success'
+    })
+  }
+
+  // 改变夫级目录记录的尺寸大小
+  setTimeout(() => {
+    if (data.size > 0) {
+      this.$emit('changeSizeOfPath', data.key, data.size)
+    }
+  }, 500)
+}
+</script>
